@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -76,7 +75,7 @@ private fun rememberTeacher(
 ): Teacher? {
     return produceState<Teacher?>(
         initialValue = null,
-        key1 = userId
+        userId
     ) {
         value = userId?.let {
             app.db.teachers().byUser(it)
@@ -85,9 +84,9 @@ private fun rememberTeacher(
 }
 
 
-/* ============================================================
+/* =========================================================
    DASHBOARD GURU
-   ============================================================ */
+   ========================================================= */
 
 @Composable
 fun TeacherDash(
@@ -95,9 +94,7 @@ fun TeacherDash(
     vm: AppVM,
     nav: NavHostController
 ) {
-    if (vm.user.value?.role != "GURU") {
-        return
-    }
+    if (vm.user.value?.role != "GURU") return
 
     Scaffold(
         topBar = {
@@ -229,9 +226,9 @@ fun TeacherDash(
 }
 
 
-/* ============================================================
+/* =========================================================
    BUAT SESI ABSENSI
-   ============================================================ */
+   ========================================================= */
 
 @Composable
 fun Session(
@@ -240,14 +237,14 @@ fun Session(
     nav: NavHostController
 ) {
     val teacher = rememberTeacher(
-        app = app,
-        userId = vm.user.value?.id
+        app,
+        vm.user.value?.id
     )
 
     val classes by app.db
         .classes()
         .observeAll()
-        .collectAsState(initial = emptyList())
+        .collectAsState(emptyList())
 
     var selected by remember {
         mutableStateOf<ClassRoom?>(null)
@@ -264,8 +261,8 @@ fun Session(
     }
 
     ScaffoldBack(
-        title = "Buat Sesi Absensi",
-        onBack = {
+        "Buat Sesi Absensi",
+        {
             nav.popBackStack()
         }
     ) { padding ->
@@ -290,11 +287,9 @@ fun Session(
 
                 FilterChip(
                     selected = selected?.id == classroom.id,
-
                     onClick = {
                         selected = classroom
                     },
-
                     label = {
                         Text(classroom.namaKelas)
                     }
@@ -319,7 +314,6 @@ fun Session(
                         currentTeacher != null &&
                         currentClass != null
                     ) {
-
                         scope.launch {
 
                             app.db.sessions().insert(
@@ -335,11 +329,8 @@ fun Session(
                         }
                     }
                 },
-
                 modifier = Modifier.fillMaxWidth(),
-
-                enabled = teacher != null &&
-                        selected != null
+                enabled = teacher != null && selected != null
             ) {
                 Text("Mulai Absensi")
             }
@@ -348,9 +339,9 @@ fun Session(
 }
 
 
-/* ============================================================
+/* =========================================================
    SCANNER QR
-   ============================================================ */
+   ========================================================= */
 
 @Composable
 fun Scanner(
@@ -359,8 +350,8 @@ fun Scanner(
     nav: NavHostController
 ) {
     val teacher = rememberTeacher(
-        app = app,
-        userId = vm.user.value?.id
+        app,
+        vm.user.value?.id
     )
 
     var rawValue by remember {
@@ -384,13 +375,11 @@ fun Scanner(
         QrScannerView(
             onToken = { value ->
 
-                if (value.isNotBlank() && value != lastValue) {
-
+                if (value != lastValue) {
                     lastValue = value
                     rawValue = value
                 }
             },
-
             modifier = Modifier.fillMaxSize()
         )
 
@@ -398,7 +387,6 @@ fun Scanner(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-
             verticalArrangement = Arrangement.Bottom
         ) {
 
@@ -413,10 +401,6 @@ fun Scanner(
                         style = MaterialTheme.typography.titleLarge
                     )
 
-                    Spacer(
-                        modifier = Modifier.height(4.dp)
-                    )
-
                     Text(message)
                 }
             }
@@ -429,7 +413,6 @@ fun Scanner(
                 onClick = {
                     nav.popBackStack()
                 },
-
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Selesai")
@@ -454,9 +437,9 @@ fun Scanner(
 }
 
 
-/* ============================================================
-   PROSES SCAN
-   ============================================================ */
+/* =========================================================
+   PROSES HASIL SCAN
+   ========================================================= */
 
 @Composable
 private fun ScanEffect(
@@ -479,9 +462,8 @@ private fun ScanEffect(
             return@LaunchedEffect
         }
 
-        val student = app.db
-            .students()
-            .byToken(token)
+        val student =
+            app.db.students().byToken(token)
 
         if (student == null) {
 
@@ -492,12 +474,12 @@ private fun ScanEffect(
             return@LaunchedEffect
         }
 
-        val session = app.db
-            .sessions()
-            .active(
-                teacher.id,
-                Clock.date()
-            )
+        val session =
+            app.db.sessions()
+                .active(
+                    teacher.id,
+                    Clock.date()
+                )
 
         if (session == null) {
 
@@ -508,9 +490,9 @@ private fun ScanEffect(
             return@LaunchedEffect
         }
 
-        val classroom = app.db
-            .classes()
-            .byId(session.classId)
+        val classroom =
+            app.db.classes()
+                .byId(session.classId)
 
         if (
             classroom?.namaKelas != student.kelas
@@ -523,20 +505,22 @@ private fun ScanEffect(
             return@LaunchedEffect
         }
 
-        val result = app.attendanceRepo.mark(
-            student,
-            teacher,
-            session
-        )
+        val result =
+            app.attendanceRepo.mark(
+                student,
+                teacher,
+                session
+            )
 
         setMessage(
             result.fold(
-
                 onSuccess = {
-                    "✓ Absensi Berhasil: ${student.nama} • ${Clock.time()}"
-                },
 
+                    "✓ Absensi Berhasil: " +
+                            "${student.nama} • ${Clock.time()}"
+                },
                 onFailure = { throwable ->
+
                     throwable.message
                         ?: "Terjadi kesalahan"
                 }
@@ -546,9 +530,9 @@ private fun ScanEffect(
 }
 
 
-/* ============================================================
+/* =========================================================
    ABSENSI HARI INI
-   ============================================================ */
+   ========================================================= */
 
 @Composable
 fun Today(
@@ -560,11 +544,11 @@ fun Today(
     val list by app.db
         .attendance()
         .observeAll()
-        .collectAsState(initial = emptyList())
+        .collectAsState(emptyList())
 
     ScaffoldBack(
-        title = "Absensi Hari Ini",
-        onBack = {
+        "Absensi Hari Ini",
+        {
             nav.popBackStack()
         }
     ) { padding ->
@@ -573,7 +557,6 @@ fun Today(
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp),
-
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
@@ -589,7 +572,6 @@ fun Today(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(14.dp),
-
                         horizontalArrangement =
                             Arrangement.SpaceBetween
                     ) {
@@ -618,9 +600,9 @@ fun Today(
 }
 
 
-/* ============================================================
+/* =========================================================
    MANAJEMEN MURID
-   ============================================================ */
+   ========================================================= */
 
 @Composable
 fun TeacherStudents(
@@ -632,7 +614,7 @@ fun TeacherStudents(
     val list by app.db
         .students()
         .observeActive()
-        .collectAsState(initial = emptyList())
+        .collectAsState(emptyList())
 
     var query by remember {
         mutableStateOf("")
@@ -675,8 +657,8 @@ fun TeacherStudents(
     val scope = rememberCoroutineScope()
 
     ScaffoldBack(
-        title = "Manajemen Murid",
-        onBack = {
+        "Manajemen Murid",
+        {
             nav.popBackStack()
         }
     ) { padding ->
@@ -685,7 +667,6 @@ fun TeacherStudents(
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp),
-
             verticalArrangement =
                 Arrangement.spacedBy(10.dp)
         ) {
@@ -697,18 +678,17 @@ fun TeacherStudents(
             )
 
             Text(
-                text = "Kelola murid dan buat akun login tanpa meninggalkan halaman ini",
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text =
+                    "Kelola murid dan buat akun login " +
+                            "tanpa meninggalkan halaman ini",
+                color =
+                    MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-
                 horizontalArrangement =
-                    Arrangement.spacedBy(8.dp),
-
-                verticalAlignment =
-                    Alignment.CenterVertically
+                    Arrangement.spacedBy(8.dp)
             ) {
 
                 Field(
@@ -724,8 +704,8 @@ fun TeacherStudents(
                     onClick = {
                         showAdd = true
                     },
-
-                    shape = RoundedCornerShape(22.dp)
+                    shape = RoundedCornerShape(22.dp),
+                    modifier = Modifier.padding(top = 2.dp)
                 ) {
                     Text("+ Murid")
                 }
@@ -738,21 +718,18 @@ fun TeacherStudents(
 
                 items(
                     list.filter {
-
                         it.nama.contains(
                             query,
-                            ignoreCase = true
+                            true
                         ) ||
-
-                        it.nis.contains(
-                            query,
-                            ignoreCase = true
-                        ) ||
-
-                        it.kelas.contains(
-                            query,
-                            ignoreCase = true
-                        )
+                                it.nis.contains(
+                                    query,
+                                    true
+                                ) ||
+                                it.kelas.contains(
+                                    query,
+                                    true
+                                )
                     }
                 ) { student ->
 
@@ -764,19 +741,16 @@ fun TeacherStudents(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(14.dp),
-
                             verticalAlignment =
                                 Alignment.CenterVertically
                         ) {
 
                             Surface(
                                 modifier = Modifier.size(44.dp),
-
-                                shape =
-                                    RoundedCornerShape(14.dp),
-
+                                shape = RoundedCornerShape(14.dp),
                                 color =
-                                    MaterialTheme.colorScheme.primaryContainer
+                                    MaterialTheme.colorScheme
+                                        .primaryContainer
                             ) {
 
                                 Box(
@@ -787,11 +761,11 @@ fun TeacherStudents(
                                     Icon(
                                         imageVector =
                                             Icons.Default.People,
-
                                         contentDescription = null,
-
                                         tint =
-                                            MaterialTheme.colorScheme.primary
+                                            MaterialTheme
+                                                .colorScheme
+                                                .primary
                                     )
                                 }
                             }
@@ -813,12 +787,11 @@ fun TeacherStudents(
                                 Text(
                                     text =
                                         "${student.nis} • ${student.kelas}",
-
                                     style =
                                         MaterialTheme.typography.bodySmall,
-
                                     color =
-                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                        MaterialTheme.colorScheme
+                                            .onSurfaceVariant
                                 )
                             }
 
@@ -831,9 +804,9 @@ fun TeacherStudents(
     }
 
 
-    /* ========================================================
+    /* =====================================================
        DIALOG TAMBAH MURID
-       ======================================================== */
+       ===================================================== */
 
     if (showAdd) {
 
@@ -841,7 +814,6 @@ fun TeacherStudents(
 
             onDismissRequest = {
                 showAdd = false
-                error = null
             },
 
             title = {
@@ -897,13 +869,14 @@ fun TeacherStudents(
                     )
 
                     Text(
-                        text = "Jika username/password kosong, sistem membuat kredensial otomatis.",
-
+                        text =
+                            "Jika username/password kosong, " +
+                                    "sistem membuat kredensial otomatis.",
                         style =
                             MaterialTheme.typography.bodySmall,
-
                         color =
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            MaterialTheme.colorScheme
+                                .onSurfaceVariant
                     )
 
                     error?.let {
@@ -919,7 +892,6 @@ fun TeacherStudents(
             confirmButton = {
 
                 Button(
-
                     onClick = {
 
                         error = null
@@ -950,7 +922,9 @@ fun TeacherStudents(
 
                             if (
                                 app.db.users()
-                                    .byUsername(finalUsername) != null
+                                    .byUsername(
+                                        finalUsername
+                                    ) != null
                             ) {
 
                                 error =
@@ -961,51 +935,36 @@ fun TeacherStudents(
 
                             val userId =
                                 app.db.users().insert(
-
                                     User(
                                         username =
                                             finalUsername,
-
                                         passwordHash =
                                             Hashing.sha256(
                                                 finalPassword
                                             ),
-
                                         nama =
                                             name.trim(),
-
-                                        role =
-                                            "MURID",
-
+                                        role = "MURID",
                                         nis =
                                             nis.trim(),
-
                                         kelas =
                                             kelas.trim()
                                     )
                                 )
 
                             app.db.students().insert(
-
                                 Student(
                                     userId = userId,
-
-                                    nis =
-                                        nis.trim(),
-
-                                    nama =
-                                        name.trim(),
-
-                                    kelas =
-                                        kelas.trim(),
-
-                                    qrToken =
-                                        Tokens.new()
+                                    nis = nis.trim(),
+                                    nama = name.trim(),
+                                    kelas = kelas.trim(),
+                                    qrToken = Tokens.new()
                                 )
                             )
 
                             createdCredentials =
-                                finalUsername to finalPassword
+                                finalUsername to
+                                        finalPassword
 
                             name = ""
                             nis = ""
@@ -1015,11 +974,9 @@ fun TeacherStudents(
                             showAdd = false
                         }
                     },
-
                     shape =
                         RoundedCornerShape(22.dp)
                 ) {
-
                     Text("Simpan")
                 }
             },
@@ -1029,7 +986,6 @@ fun TeacherStudents(
                 TextButton(
                     onClick = {
                         showAdd = false
-                        error = null
                     }
                 ) {
                     Text("Batal")
@@ -1039,9 +995,9 @@ fun TeacherStudents(
     }
 
 
-    /* ========================================================
+    /* =====================================================
        DIALOG KREDENSIAL
-       ======================================================== */
+       ===================================================== */
 
     createdCredentials?.let { credentials ->
 
@@ -1052,30 +1008,30 @@ fun TeacherStudents(
             },
 
             title = {
-                Text("Akun Murid Berhasil Dibuat")
+                Text(
+                    "Akun Murid Berhasil Dibuat"
+                )
             },
 
             text = {
 
                 Text(
                     "Username: ${credentials.first}\n" +
-                    "Password: ${credentials.second}\n\n" +
-                    "Simpan kredensial ini dan berikan kepada murid."
+                            "Password: ${credentials.second}\n\n" +
+                            "Simpan kredensial ini dan " +
+                            "berikan kepada murid."
                 )
             },
 
             confirmButton = {
 
                 Button(
-
                     onClick = {
                         createdCredentials = null
                     },
-
                     shape =
                         RoundedCornerShape(22.dp)
                 ) {
-
                     Text("Selesai")
                 }
             }
@@ -1084,9 +1040,9 @@ fun TeacherStudents(
 }
 
 
-/* ============================================================
-   HISTORY / RIWAYAT ABSENSI
-   ============================================================ */
+/* =========================================================
+   RIWAYAT ABSENSI
+   ========================================================= */
 
 @Composable
 fun History(
@@ -1101,12 +1057,14 @@ fun History(
     val student =
         produceState<Student?>(
             initialValue = null,
-            key1 = studentId
+            studentId
         ) {
 
-            value = studentId?.let {
-                app.db.students().byUser(it)
-            }
+            value =
+                studentId?.let {
+                    app.db.students()
+                        .byUser(it)
+                }
         }.value
 
     val list by app.db
@@ -1114,13 +1072,11 @@ fun History(
         .byStudent(
             student?.id ?: -1L
         )
-        .collectAsState(
-            initial = emptyList()
-        )
+        .collectAsState(emptyList())
 
     ScaffoldBack(
-        title = "Riwayat Absensi",
-        onBack = {
+        "Riwayat Absensi",
+        {
             nav.popBackStack()
         }
     ) { padding ->
@@ -1129,7 +1085,6 @@ fun History(
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp),
-
             verticalArrangement =
                 Arrangement.spacedBy(8.dp)
         ) {
@@ -1142,14 +1097,11 @@ fun History(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(14.dp),
-
                         horizontalArrangement =
                             Arrangement.SpaceBetween
                     ) {
 
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        Column {
 
                             Text(
                                 attendance.tanggal
@@ -1171,9 +1123,9 @@ fun History(
 }
 
 
-/* ============================================================
-   PROFILE
-   ============================================================ */
+/* =========================================================
+   PROFIL
+   ========================================================= */
 
 @Composable
 fun Profile(
@@ -1182,8 +1134,8 @@ fun Profile(
 ) {
 
     ScaffoldBack(
-        title = "Profil",
-        onBack = {
+        "Profil",
+        {
             nav.popBackStack()
         }
     ) { padding ->
@@ -1192,7 +1144,6 @@ fun Profile(
             modifier = Modifier
                 .padding(padding)
                 .padding(20.dp),
-
             verticalArrangement =
                 Arrangement.spacedBy(8.dp)
         ) {
@@ -1200,7 +1151,6 @@ fun Profile(
             Text(
                 text =
                     vm.user.value?.nama.orEmpty(),
-
                 style =
                     MaterialTheme.typography.headlineSmall
             )
