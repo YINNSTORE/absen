@@ -27,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -52,60 +53,53 @@ fun MenuBlock(
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.padding(18.dp),
+            modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
+            Surface(
                 modifier = Modifier.size(48.dp),
-                contentAlignment = Alignment.Center
+                shape = RoundedCornerShape(15.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                icon()
+                Box(contentAlignment = Alignment.Center) { icon() }
             }
 
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 8.dp)
+                    .padding(horizontal = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = desc,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    desc,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null
-            )
+            Icon(Icons.Default.ChevronRight, contentDescription = null)
         }
     }
 }
 
 @Composable
-fun RowScope.Stat(
-    label: String,
-    value: Int
-) {
+fun RowScope.Stat(label: String, value: Int) {
     Card(
-        modifier = Modifier.weight(1f)
+        modifier = Modifier.weight(1f),
+        shape = RoundedCornerShape(20.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
-            Text(
-                text = value.toString(),
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Text(text = label)
+            Text(value.toString(), style = MaterialTheme.typography.headlineSmall)
+            Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -125,7 +119,7 @@ fun Field(
         onValueChange = onChange,
         label = { Text(label) },
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(22.dp),
         singleLine = minLines == 1,
         minLines = minLines,
         keyboardOptions = if (secret) KeyboardOptions(keyboardType = KeyboardType.Password) else KeyboardOptions.Default,
@@ -133,7 +127,10 @@ fun Field(
         trailingIcon = if (secret) {
             {
                 IconButton(onClick = { visible = !visible }) {
-                    Icon(if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility, contentDescription = if (visible) "Sembunyikan password" else "Tampilkan password")
+                    Icon(
+                        if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (visible) "Sembunyikan password" else "Tampilkan password"
+                    )
                 }
             }
         } else null
@@ -147,11 +144,7 @@ fun Badge(text: String) {
         label = { Text(text) },
         leadingIcon = {
             Icon(
-                imageVector = if (text == "HADIR") {
-                    Icons.Default.CheckCircle
-                } else {
-                    Icons.Default.Info
-                },
+                imageVector = if (text == "HADIR" || text == "AKTIF") Icons.Default.CheckCircle else Icons.Default.Info,
                 contentDescription = null
             )
         }
@@ -167,13 +160,10 @@ fun ScaffoldBack(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = { Text(title, style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Kembali"
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
                     }
                 }
             )
