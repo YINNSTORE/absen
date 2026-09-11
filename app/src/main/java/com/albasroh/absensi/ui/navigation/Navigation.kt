@@ -11,7 +11,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.albasroh.absensi.AbsensiApplication
-import com.albasroh.absensi.ui.admin.Admin
 import com.albasroh.absensi.ui.admin.AdminAttendance
 import com.albasroh.absensi.ui.admin.Classes
 import com.albasroh.absensi.ui.admin.Reports
@@ -19,14 +18,10 @@ import com.albasroh.absensi.ui.admin.Settings
 import com.albasroh.absensi.ui.admin.Students
 import com.albasroh.absensi.ui.admin.Teachers
 import com.albasroh.absensi.ui.auth.Login
-import com.albasroh.absensi.ui.student.StudentDash
-import com.albasroh.absensi.ui.student.StudentQR
-import com.albasroh.absensi.ui.student.StudentStats
 import com.albasroh.absensi.ui.teacher.History
 import com.albasroh.absensi.ui.teacher.Profile
 import com.albasroh.absensi.ui.teacher.Scanner
 import com.albasroh.absensi.ui.teacher.Session
-import com.albasroh.absensi.ui.teacher.TeacherDash
 import com.albasroh.absensi.ui.teacher.TeacherStudents
 import com.albasroh.absensi.ui.teacher.Today
 import com.albasroh.absensi.ui.modern.ModernAdminHome
@@ -35,7 +30,6 @@ import com.albasroh.absensi.ui.modern.ModernStudentHome
 import com.albasroh.absensi.ui.modern.LeaveRequests
 import com.albasroh.absensi.ui.modern.Chatroom
 import com.albasroh.absensi.ui.modern.ModernReports
-import kotlinx.coroutines.delay
 
 object R {
     const val SPLASH = "splash"
@@ -72,8 +66,9 @@ fun Nav(
         startDestination = R.SPLASH
     ) {
         composable(R.SPLASH) {
-            LaunchedEffect(vm.user.value) {
-                delay(700)
+            LaunchedEffect(vm.sessionReady.value) {
+                if (!vm.sessionReady.value) return@LaunchedEffect
+
                 val destination = when (vm.user.value?.role) {
                     "ADMIN" -> R.ADMIN
                     "GURU" -> R.TEACHER
@@ -82,9 +77,8 @@ fun Nav(
                 }
 
                 nav.navigate(destination) {
-                    popUpTo(R.SPLASH) {
-                        inclusive = true
-                    }
+                    popUpTo(R.SPLASH) { inclusive = true }
+                    launchSingleTop = true
                 }
             }
 
@@ -111,8 +105,8 @@ fun Nav(
         composable(R.STUDENTS_T) { TeacherStudents(app, vm, nav) }
         composable(R.HISTORY) { History(app, vm, nav) }
         composable(R.STUDENT) { ModernStudentHome(app, vm, nav) }
-        composable(R.QR) { StudentQR(app, vm, nav) }
-        composable(R.STATS) { StudentStats(app, vm, nav) }
+        composable(R.QR) { com.albasroh.absensi.ui.student.StudentQR(app, vm, nav) }
+        composable(R.STATS) { com.albasroh.absensi.ui.student.StudentStats(app, vm, nav) }
         composable(R.PROFILE) { Profile(vm, nav) }
         composable(R.LEAVE) { LeaveRequests(app, vm, nav) }
         composable(R.CHAT) { Chatroom(app, vm, nav) }
