@@ -13,24 +13,28 @@ android {
         applicationId = "com.albasroh.absensi"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+
+        versionCode = 4
+        versionName = "1.3.0"
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         debug {
-            // Keep debug installable while shrinking unused Compose/material resources.
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -42,17 +46,27 @@ android {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a", "armeabi-v7a", "x86_64")
-            isUniversalApk = false
+
+            include(
+                "arm64-v8a",
+                "armeabi-v7a",
+                "x86_64"
+            )
+
+            isUniversalApk = true
         }
     }
 
     packaging {
         resources {
             excludes += setOf(
-                "META-INF/LICENSE*",
-                "META-INF/NOTICE*",
-                "META-INF/DEPENDENCIES"
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/LICENSE.md",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/DEPENDENCIES",
+                "META-INF/*.kotlin_module"
             )
         }
     }
@@ -68,35 +82,59 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
 dependencies {
+
+    // Compose
     implementation(platform("androidx.compose:compose-bom:2024.09.03"))
+
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.core:core-ktx:1.13.1")
 
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
+
     implementation("androidx.compose.material3:material3:1.3.0")
+
+    // PENTING:
+    // Dibutuhkan oleh Icons.Filled.*
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.2")
+
+    // Lifecycle
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
 
+    // Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
 
+    // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    // CameraX
     implementation("androidx.camera:camera-core:1.3.4")
     implementation("androidx.camera:camera-camera2:1.3.4")
     implementation("androidx.camera:camera-lifecycle:1.3.4")
     implementation("androidx.camera:camera-view:1.3.4")
+
+    // Google ML Kit QR / Barcode
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
+
+    // QR Generator
     implementation("com.google.zxing:core:3.5.3")
 
+    // Test
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation(
+        "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0"
+    )
 }
