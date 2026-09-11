@@ -29,9 +29,11 @@ class Prefs(private val context: Context) {
         }
     }
 
+    // Logout HANYA menghapus sesi. Preferensi tema tetap disimpan.
     suspend fun logout() {
         context.store.edit { preferences ->
-            preferences.clear()
+            preferences.remove(userIdKey)
+            preferences.remove(roleKey)
         }
     }
 
