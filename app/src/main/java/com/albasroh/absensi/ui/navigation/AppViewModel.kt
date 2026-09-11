@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.catch
 
 class AppVM(
     private val app: AbsensiApplication
@@ -32,10 +33,20 @@ class AppVM(
 
     init {
         viewModelScope.launch {
-            app.prefs.session.collect { (id, _) ->
-                user.value = id?.let { app.db.users().byId(it) }
-                sessionReady.value = true
+            try {
+                app.ready.await()
+            } catch (_: Throwable) {
+                // Database gagal disiapkan: tetap lepaskan splash agar aplikasi tidak loading selamanya.
             }
+            app.prefs.session
+                .catch {
+                    user.value = null
+                    sessionReady.value = true
+                }
+                .collect { (id, _) ->
+                    user.value = id?.let { app.db.users().byId(it) }
+                    sessionReady.value = true
+                }
         }
     }
 
