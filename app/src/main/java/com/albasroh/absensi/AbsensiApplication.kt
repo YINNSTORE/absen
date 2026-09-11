@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CompletableDeferred
 
 class AbsensiApplication : Application() {
     lateinit var db: AppDatabase
@@ -33,6 +34,9 @@ class AbsensiApplication : Application() {
         private set
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // Sinyal bahwa database dan akun awal sudah siap. Splash menunggu ini agar tidak macet/race.
+    val ready = CompletableDeferred<Unit>()
 
     override fun onCreate() {
         super.onCreate()
@@ -55,7 +59,12 @@ class AbsensiApplication : Application() {
         attendanceRepo = AttendanceRepo(db.attendance())
 
         applicationScope.launch {
-            seed()
+            try {
+                seed()
+                ready.complete(Unit)
+            } catch (t: Throwable) {
+                ready.completeExceptionally(t)
+            }
         }
     }
 
