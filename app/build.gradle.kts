@@ -11,24 +11,22 @@ android {
 
     defaultConfig {
         applicationId = "com.albasroh.absensi"
+
         minSdk = 26
         targetSdk = 35
 
         versionCode = 4
         versionName = "1.3.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
+
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
-
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
         }
 
         release {
@@ -36,12 +34,20 @@ android {
             isShrinkResources = true
 
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
+                getDefaultProguardFile(
+                    "proguard-android-optimize.txt"
+                ),
                 "proguard-rules.pro"
             )
         }
     }
 
+    /*
+     * APK ABI
+     *
+     * Universal APK tetap dibuat supaya
+     * bisa langsung dipasang di berbagai HP.
+     */
     splits {
         abi {
             isEnable = true
@@ -57,6 +63,29 @@ android {
         }
     }
 
+    /*
+     * Java 17
+     */
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    /*
+     * Jetpack Compose
+     */
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+
+    /*
+     * Packaging
+     */
     packaging {
         resources {
             excludes += setOf(
@@ -70,70 +99,166 @@ android {
             )
         }
     }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
-    buildFeatures {
-        compose = true
-        buildConfig = true
-    }
 }
 
 dependencies {
 
-    // Compose
-    implementation(platform("androidx.compose:compose-bom:2024.09.03"))
+    // =========================================================
+    // ANDROID CORE
+    // =========================================================
 
-    implementation("androidx.activity:activity-compose:1.9.2")
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation(
+        "androidx.core:core-ktx:1.13.1"
+    )
 
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation(
+        "androidx.activity:activity-compose:1.9.2"
+    )
 
-    debugImplementation("androidx.compose.ui:ui-tooling")
 
-    implementation("androidx.compose.material3:material3:1.3.0")
+    // =========================================================
+    // JETPACK COMPOSE
+    // =========================================================
 
-    // PENTING:
-    // Dibutuhkan oleh Icons.Filled.*
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(
+        platform(
+            "androidx.compose:compose-bom:2024.09.03"
+        )
+    )
 
-    // Navigation
-    implementation("androidx.navigation:navigation-compose:2.8.2")
+    implementation(
+        "androidx.compose.ui:ui"
+    )
 
-    // Lifecycle
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation(
+        "androidx.compose.ui:ui-tooling-preview"
+    )
 
-    // Room
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
+    debugImplementation(
+        "androidx.compose.ui:ui-tooling"
+    )
 
-    // DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // CameraX
-    implementation("androidx.camera:camera-core:1.3.4")
-    implementation("androidx.camera:camera-camera2:1.3.4")
-    implementation("androidx.camera:camera-lifecycle:1.3.4")
-    implementation("androidx.camera:camera-view:1.3.4")
+    // =========================================================
+    // MATERIAL 3
+    // =========================================================
 
-    // Google ML Kit QR / Barcode
-    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation(
+        "androidx.compose.material3:material3:1.3.0"
+    )
 
-    // QR Generator
-    implementation("com.google.zxing:core:3.5.3")
+    /*
+     * WAJIB karena project menggunakan:
+     *
+     * Icons.Default.People
+     * Icons.Default.Person
+     * Icons.Default.Assignment
+     * Icons.Default.BarChart
+     * Icons.Default.QrCodeScanner
+     * Icons.Default.Schedule
+     */
+    implementation(
+        "androidx.compose.material:material-icons-extended"
+    )
 
-    // Test
-    testImplementation("junit:junit:4.13.2")
+
+    // =========================================================
+    // NAVIGATION
+    // =========================================================
+
+    implementation(
+        "androidx.navigation:navigation-compose:2.8.2"
+    )
+
+
+    // =========================================================
+    // LIFECYCLE
+    // =========================================================
+
+    implementation(
+        "androidx.lifecycle:lifecycle-runtime-compose:2.8.6"
+    )
+
+    implementation(
+        "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6"
+    )
+
+
+    // =========================================================
+    // ROOM DATABASE
+    // =========================================================
+
+    implementation(
+        "androidx.room:room-runtime:2.6.1"
+    )
+
+    implementation(
+        "androidx.room:room-ktx:2.6.1"
+    )
+
+    ksp(
+        "androidx.room:room-compiler:2.6.1"
+    )
+
+
+    // =========================================================
+    // DATASTORE
+    // =========================================================
+
+    implementation(
+        "androidx.datastore:datastore-preferences:1.1.1"
+    )
+
+
+    // =========================================================
+    // CAMERAX
+    // =========================================================
+
+    implementation(
+        "androidx.camera:camera-core:1.3.4"
+    )
+
+    implementation(
+        "androidx.camera:camera-camera2:1.3.4"
+    )
+
+    implementation(
+        "androidx.camera:camera-lifecycle:1.3.4"
+    )
+
+    implementation(
+        "androidx.camera:camera-view:1.3.4"
+    )
+
+
+    // =========================================================
+    // GOOGLE ML KIT
+    // QR / BARCODE SCANNER
+    // =========================================================
+
+    implementation(
+        "com.google.mlkit:barcode-scanning:17.3.0"
+    )
+
+
+    // =========================================================
+    // ZXING
+    // QR CODE GENERATOR
+    // =========================================================
+
+    implementation(
+        "com.google.zxing:core:3.5.3"
+    )
+
+
+    // =========================================================
+    // TEST
+    // =========================================================
+
+    testImplementation(
+        "junit:junit:4.13.2"
+    )
+
     testImplementation(
         "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0"
     )
