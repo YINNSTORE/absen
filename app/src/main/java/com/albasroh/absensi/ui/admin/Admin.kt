@@ -31,8 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -497,6 +497,9 @@ fun Settings(
     vm: AppVM,
     nav: NavHostController
 ) {
+    val user by vm.user.collectAsState()
+    val theme by vm.theme.collectAsState()
+
     ScaffoldBack("Pengaturan", { nav.popBackStack() }) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -506,62 +509,43 @@ fun Settings(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)
         ) {
             item {
-                Text(
-                    "Tampilan",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                )
-            }
-
-            item {
-                Text(
-                    "Pilih tema aplikasi",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Card(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                    colors = androidx.compose.material3.CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
                 ) {
-                    listOf(
-                        "SYSTEM" to "Sistem",
-                        "LIGHT" to "Terang",
-                        "DARK" to "Gelap"
-                    ).forEach { (value, label) ->
+                    Column(Modifier.padding(18.dp)) {
+                        Text("Pengaturan Aplikasi", style = MaterialTheme.typography.headlineSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold)
+                        Spacer(Modifier.height(5.dp))
+                        Text("Atur tampilan dan akun Anda", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            item {
+                Text("Tema", style = MaterialTheme.typography.titleLarge, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                Spacer(Modifier.height(6.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("SYSTEM" to "Sistem", "LIGHT" to "Terang", "DARK" to "Gelap").forEach { (value, label) ->
                         Button(
                             onClick = { vm.setTheme(value) },
                             modifier = Modifier.weight(1f),
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)
-                        ) {
-                            Text(label)
-                        }
+                        ) { Text(label) }
                     }
                 }
+                Spacer(Modifier.height(5.dp))
+                Text("Tema aktif: ${theme.lowercase().replaceFirstChar { it.uppercase() }}", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-
             item {
-                Spacer(Modifier.height(8.dp))
-                Card(
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            "Akun",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                        )
-                        Spacer(Modifier.height(5.dp))
-                        Text("${vm.user.value?.nama ?: "-"}")
-                        Text(
-                            "${vm.user.value?.role ?: "-"}",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                Card(shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Akun", style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                        Text(user?.nama ?: "-")
+                        Text("${user?.username ?: "-"} • ${user?.role ?: "-"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
-
             item {
                 Button(
                     onClick = {
@@ -573,9 +557,7 @@ fun Settings(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
-                ) {
-                    Text("Logout")
-                }
+                ) { Text("Logout") }
             }
         }
     }
