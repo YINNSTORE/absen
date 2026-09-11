@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode
@@ -80,20 +81,66 @@ import com.albasroh.absensi.ui.components.ScaffoldBack
 import com.albasroh.absensi.ui.navigation.AppVM
 import com.albasroh.absensi.ui.navigation.R
 import com.albasroh.absensi.util.Clock
+import com.albasroh.absensi.util.Hashing
 import com.albasroh.absensi.util.ReportExporter
+import com.albasroh.absensi.util.Tokens
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 private val Blue = Color(0xFF1769E0)
-private val BlueDark = Color(0xFF0D47B8)
+private val BlueDark = Color(0xFF0B49B7)
+private val Page = Color(0xFFF5F9FF)
 
 private fun logout(vm: AppVM, nav: NavHostController) {
     vm.logout()
     nav.navigate(R.LOGIN) {
         popUpTo(0) { inclusive = true }
         launchSingleTop = true
+    }
+}
+
+@Composable
+private fun AppTopBar(
+    title: String,
+    subtitle: String,
+    onNotification: () -> Unit,
+    onLogout: () -> Unit
+) {
+    Surface(color = Blue) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(15.dp),
+                color = Color.White
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Image(
+                        painter = painterResource(AppR.drawable.logo_mts_al_basroh),
+                        contentDescription = "Logo",
+                        modifier = Modifier.size(40.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+            Spacer(Modifier.size(11.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, color = Color.White, fontWeight = FontWeight.Bold)
+                Text(subtitle, color = Color.White.copy(.76f), style = MaterialTheme.typography.bodySmall)
+            }
+            IconButton(onClick = onNotification) {
+                Icon(Icons.Default.NotificationsNone, "Notifikasi", tint = Color.White)
+            }
+            IconButton(onClick = onLogout) {
+                Icon(Icons.Default.Logout, "Logout", tint = Color.White)
+            }
+        }
     }
 }
 
@@ -107,30 +154,10 @@ private fun HeaderCard(name: String, role: String, subtitle: String) {
             .padding(20.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    modifier = Modifier.size(50.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.White
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Image(
-                            painter = painterResource(AppR.drawable.logo_mts_al_basroh),
-                            contentDescription = "Logo MTs-Al Basroh",
-                            modifier = Modifier.size(44.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                }
-                Spacer(Modifier.size(12.dp))
-                Column {
-                    Text("MTs-Al Basroh", color = Color.White, fontWeight = FontWeight.Bold)
-                    Text(role, color = Color.White.copy(alpha = .78f), style = MaterialTheme.typography.bodySmall)
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-            Text("Halo, $name 👋", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text(subtitle, color = Color.White.copy(alpha = .86f), style = MaterialTheme.typography.bodyMedium)
+            Text("MTs-Al Basroh", color = Color.White.copy(.8f), style = MaterialTheme.typography.labelLarge)
+            Text("Halo, $name 👋", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+            Text(role, color = Color.White, fontWeight = FontWeight.Bold)
+            Text(subtitle, color = Color.White.copy(.84f), style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -144,42 +171,61 @@ private fun StatCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(19.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(1.dp)
     ) {
         Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primaryContainer) {
                 Icon(icon, null, Modifier.padding(7.dp), tint = MaterialTheme.colorScheme.primary)
             }
-            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
             Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 @Composable
-private fun ActionCard(
+private fun MenuTile(
     title: String,
-    desc: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(1.dp)
     ) {
-        Row(Modifier.padding(13.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = RoundedCornerShape(13.dp), color = MaterialTheme.colorScheme.primaryContainer) {
-                Icon(icon, null, Modifier.padding(8.dp), tint = MaterialTheme.colorScheme.primary)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 15.dp, horizontal = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(15.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
+                }
             }
-            Spacer(Modifier.size(10.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.SemiBold)
-                Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(title: String, action: String? = null, onAction: (() -> Unit)? = null) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
+        if (action != null && onAction != null) {
+            androidx.compose.material3.TextButton(onClick = onAction) { Text(action) }
         }
     }
 }
@@ -190,7 +236,7 @@ private fun BottomNav(
     nav: NavHostController,
     items: List<Triple<String, String, androidx.compose.ui.graphics.vector.ImageVector>>
 ) {
-    NavigationBar {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         items.forEach { (route, label, icon) ->
             NavigationBarItem(
                 selected = current == route,
@@ -198,10 +244,9 @@ private fun BottomNav(
                     nav.navigate(route) {
                         launchSingleTop = true
                         restoreState = true
-                        popUpTo(nav.graph.startDestinationId) { saveState = true }
                     }
                 },
-                icon = { Icon(icon, contentDescription = label) },
+                icon = { Icon(icon, label) },
                 label = { Text(label) }
             )
         }
@@ -210,6 +255,7 @@ private fun BottomNav(
 
 @Composable
 fun ModernAdminHome(app: AbsensiApplication, vm: AppVM, nav: NavHostController) {
+    val user by vm.user.collectAsState()
     val students by app.db.students().observeActive().collectAsState(emptyList())
     val teachers by app.db.teachers().observeAll().collectAsState(emptyList())
     val attendance by app.db.attendance().observeAll().collectAsState(emptyList())
@@ -217,59 +263,70 @@ fun ModernAdminHome(app: AbsensiApplication, vm: AppVM, nav: NavHostController) 
     val today = Clock.date()
 
     Scaffold(
+        containerColor = Page,
         topBar = {
-            TopAppBar(
-                title = { Text("Beranda", fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton({ nav.navigate(R.SETTINGS) }) { Icon(Icons.Default.Settings, "Pengaturan") }
-                    IconButton({ logout(vm, nav) }) { Icon(Icons.Default.Logout, "Logout") }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            AppTopBar(
+                "Halo, ${user?.nama ?: "Admin"}",
+                "MTs-Al Basroh • Administrator",
+                onNotification = { nav.navigate(R.LEAVE) },
+                onLogout = { logout(vm, nav) }
             )
         },
         bottomBar = {
-            BottomNav(
-                R.ADMIN,
-                nav,
-                listOf(
-                    Triple(R.ADMIN, "Beranda", Icons.Default.Home),
-                    Triple(R.ATTENDANCE, "Absensi", Icons.Default.Assignment),
-                    Triple(R.CHAT, "Chat", Icons.Default.Chat),
-                    Triple(R.SETTINGS, "Lainnya", Icons.Default.Settings)
-                )
-            )
+            BottomNav(R.ADMIN, nav, listOf(
+                Triple(R.ADMIN, "Beranda", Icons.Default.Home),
+                Triple(R.ATTENDANCE, "Absensi", Icons.Default.Assignment),
+                Triple(R.CHAT, "Chat", Icons.Default.Chat),
+                Triple(R.SETTINGS, "Lainnya", Icons.Default.Settings)
+            ))
         }
     ) { padding ->
         LazyColumn(
             Modifier.padding(padding).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(13.dp),
-            contentPadding = PaddingValues(bottom = 20.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            item { HeaderCard(vm.user.value?.nama ?: "Administrator", "ADMINISTRATOR", "Kelola operasional absensi sekolah dengan cepat") }
+            item { HeaderCard(user?.nama ?: "Administrator", "ADMINISTRATOR", "Kelola absensi sekolah dengan cepat dan rapi") }
             item {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    StatCard("Murid Aktif", students.size.toString(), Icons.Default.People, Modifier.weight(1f))
-                    StatCard("Guru", teachers.size.toString(), Icons.Default.Person, Modifier.weight(1f))
+                SectionTitle("Ringkasan Hari Ini")
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatCard("Hadir", attendance.count { it.tanggal == today && it.status == "HADIR" }.toString(), Icons.Default.CheckCircle, Modifier.weight(1f))
+                    StatCard("Sakit", attendance.count { it.tanggal == today && it.status == "SAKIT" }.toString(), Icons.Default.Sick, Modifier.weight(1f))
+                    StatCard("Izin", attendance.count { it.tanggal == today && it.status == "IZIN" }.toString(), Icons.Default.EventNote, Modifier.weight(1f))
                 }
             }
             item {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    StatCard("Hadir Hari Ini", attendance.count { it.tanggal == today && it.status == "HADIR" }.toString(), Icons.Default.CheckCircle, Modifier.weight(1f))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatCard("Murid", students.size.toString(), Icons.Default.People, Modifier.weight(1f))
+                    StatCard("Guru", teachers.size.toString(), Icons.Default.Person, Modifier.weight(1f))
                     StatCard("Pengajuan", requests.count { it.status == "MENUNGGU" }.toString(), Icons.Default.EventNote, Modifier.weight(1f))
                 }
             }
-            item { Text("Akses Cepat", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+            item { SectionTitle("Menu Utama") }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        ActionCard("Data Murid", "Kelola siswa", Icons.Default.People) { nav.navigate(R.STUDENTS) }
-                        ActionCard("Data Kelas", "Kelola kelas", Icons.Default.Groups) { nav.navigate(R.CLASSES) }
-                        ActionCard("Chatroom", "Komunikasi sekolah", Icons.Default.Chat) { nav.navigate(R.CHAT) }
-                    }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        ActionCard("Data Guru", "Kelola guru", Icons.Default.Person) { nav.navigate(R.TEACHERS) }
-                        ActionCard("Laporan", "Export PDF / Excel", Icons.Default.Description) { nav.navigate(R.REPORTS) }
-                        ActionCard("Pengajuan", "Review izin/sakit", Icons.Default.EventNote) { nav.navigate(R.LEAVE) }
+                    MenuTile("Data Murid", Icons.Default.People, { nav.navigate(R.STUDENTS) }, Modifier.weight(1f))
+                    MenuTile("Data Guru", Icons.Default.Person, { nav.navigate(R.TEACHERS) }, Modifier.weight(1f))
+                    MenuTile("Data Kelas", Icons.Default.Groups, { nav.navigate(R.CLASSES) }, Modifier.weight(1f))
+                }
+            }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    MenuTile("Absensi", Icons.Default.Assignment, { nav.navigate(R.ATTENDANCE) }, Modifier.weight(1f))
+                    MenuTile("Laporan", Icons.Default.BarChart, { nav.navigate(R.REPORTS) }, Modifier.weight(1f))
+                    MenuTile("Pengajuan", Icons.Default.EventNote, { nav.navigate(R.LEAVE) }, Modifier.weight(1f))
+                }
+            }
+            item {
+                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Chat, null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.size(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Chatroom Sekolah", fontWeight = FontWeight.Bold)
+                            Text("Komunikasi dengan guru dan murid", style = MaterialTheme.typography.bodySmall)
+                        }
+                        androidx.compose.material3.TextButton(onClick = { nav.navigate(R.CHAT) }) { Text("Buka") }
                     }
                 }
             }
@@ -279,59 +336,60 @@ fun ModernAdminHome(app: AbsensiApplication, vm: AppVM, nav: NavHostController) 
 
 @Composable
 fun ModernTeacherHome(app: AbsensiApplication, vm: AppVM, nav: NavHostController) {
+    val user by vm.user.collectAsState()
     val attendance by app.db.attendance().observeAll().collectAsState(emptyList())
     val students by app.db.students().observeActive().collectAsState(emptyList())
     val today = Clock.date()
 
     Scaffold(
+        containerColor = Page,
         topBar = {
-            TopAppBar(
-                title = { Text("Beranda", fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton({ nav.navigate(R.PROFILE) }) { Icon(Icons.Default.Person, "Profil") }
-                    IconButton({ logout(vm, nav) }) { Icon(Icons.Default.Logout, "Logout") }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
+            AppTopBar("Halo, ${user?.nama ?: "Guru"}", "MTs-Al Basroh • Guru", { nav.navigate(R.LEAVE) }, { logout(vm, nav) })
         },
         bottomBar = {
-            BottomNav(
-                R.TEACHER,
-                nav,
-                listOf(
-                    Triple(R.TEACHER, "Beranda", Icons.Default.Home),
-                    Triple(R.SCANNER, "Absensi", Icons.Default.QrCodeScanner),
-                    Triple(R.CHAT, "Chat", Icons.Default.Chat),
-                    Triple(R.STUDENTS_T, "Lainnya", Icons.Default.People)
-                )
-            )
+            BottomNav(R.TEACHER, nav, listOf(
+                Triple(R.TEACHER, "Beranda", Icons.Default.Home),
+                Triple(R.SCANNER, "Absensi", Icons.Default.QrCodeScanner),
+                Triple(R.CHAT, "Chat", Icons.Default.Chat),
+                Triple(R.STUDENTS_T, "Lainnya", Icons.Default.People)
+            ))
         }
     ) { padding ->
         LazyColumn(
             Modifier.padding(padding).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(13.dp),
-            contentPadding = PaddingValues(bottom = 20.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            item { HeaderCard(vm.user.value?.nama ?: "Guru", "GURU", "Pantau kehadiran dan kelas hari ini") }
+            item { HeaderCard(user?.nama ?: "Guru", "GURU", "Pantau kehadiran dan kelas hari ini") }
+            item { SectionTitle("Ringkasan Hari Ini") }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatCard("Murid", students.size.toString(), Icons.Default.People, Modifier.weight(1f))
                     StatCard("Hadir", attendance.count { it.tanggal == today && it.status == "HADIR" }.toString(), Icons.Default.CheckCircle, Modifier.weight(1f))
-                    StatCard("Izin/Sakit", attendance.count { it.tanggal == today && (it.status == "IZIN" || it.status == "SAKIT") }.toString(), Icons.Default.EventNote, Modifier.weight(1f))
+                    StatCard("Izin", attendance.count { it.tanggal == today && it.status == "IZIN" }.toString(), Icons.Default.EventNote, Modifier.weight(1f))
+                    StatCard("Sakit", attendance.count { it.tanggal == today && it.status == "SAKIT" }.toString(), Icons.Default.Sick, Modifier.weight(1f))
                 }
             }
-            item { Text("Menu Utama", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+            item { SectionTitle("Menu Utama") }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        ActionCard("Scan QR", "Absensi cepat", Icons.Default.QrCodeScanner) { nav.navigate(R.SCANNER) }
-                        ActionCard("Sesi Absensi", "Mulai sesi kelas", Icons.Default.Schedule) { nav.navigate(R.SESSION) }
-                        ActionCard("Manajemen Murid", "Tambah murid + akun", Icons.Default.People) { nav.navigate(R.STUDENTS_T) }
-                    }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        ActionCard("Absensi Hari Ini", "Cek status siswa", Icons.Default.Assignment) { nav.navigate(R.TODAY) }
-                        ActionCard("Pengajuan", "Review izin/sakit", Icons.Default.EventNote) { nav.navigate(R.LEAVE) }
-                        ActionCard("Laporan", "Rekap & export", Icons.Default.BarChart) { nav.navigate(R.REPORTS) }
+                    MenuTile("Scan QR", Icons.Default.QrCodeScanner, { nav.navigate(R.SCANNER) }, Modifier.weight(1f))
+                    MenuTile("Sesi", Icons.Default.Schedule, { nav.navigate(R.SESSION) }, Modifier.weight(1f))
+                    MenuTile("Murid", Icons.Default.People, { nav.navigate(R.STUDENTS_T) }, Modifier.weight(1f))
+                }
+            }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    MenuTile("Hari Ini", Icons.Default.Assignment, { nav.navigate(R.TODAY) }, Modifier.weight(1f))
+                    MenuTile("Pengajuan", Icons.Default.EventNote, { nav.navigate(R.LEAVE) }, Modifier.weight(1f))
+                    MenuTile("Laporan", Icons.Default.BarChart, { nav.navigate(R.REPORTS) }, Modifier.weight(1f))
+                }
+            }
+            item {
+                Card(shape = RoundedCornerShape(22.dp)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Text("Total murid aktif", style = MaterialTheme.typography.bodySmall)
+                        Text("${students.size} murid", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text("Gunakan Scan QR untuk mencatat kehadiran dengan cepat.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -341,55 +399,46 @@ fun ModernTeacherHome(app: AbsensiApplication, vm: AppVM, nav: NavHostController
 
 @Composable
 fun ModernStudentHome(app: AbsensiApplication, vm: AppVM, nav: NavHostController) {
-    val student by produceState<Student?>(null, vm.user.value?.id) {
-        value = vm.user.value?.id?.let { app.db.students().byUser(it) }
-    }
+    val user by vm.user.collectAsState()
+    val student by produceState<Student?>(null, user?.id) { value = user?.id?.let { app.db.students().byUser(it) } }
     val attendance by app.db.attendance().byStudent(student?.id ?: -1L).collectAsState(emptyList())
     val today = Clock.date()
     val todayStatus = attendance.firstOrNull { it.tanggal == today }?.status ?: "BELUM ABSEN"
 
     Scaffold(
+        containerColor = Page,
         topBar = {
-            TopAppBar(
-                title = { Text("Beranda", fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton({ nav.navigate(R.PROFILE) }) { Icon(Icons.Default.Person, "Profil") }
-                    IconButton({ logout(vm, nav) }) { Icon(Icons.Default.Logout, "Logout") }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
+            AppTopBar("Halo, ${student?.nama ?: user?.nama.orEmpty()} 👋", "Kelas ${student?.kelas ?: "-"}", { nav.navigate(R.LEAVE) }, { logout(vm, nav) })
         },
         bottomBar = {
-            BottomNav(
-                R.STUDENT,
-                nav,
-                listOf(
-                    Triple(R.STUDENT, "Beranda", Icons.Default.Home),
-                    Triple(R.QR, "Absensi", Icons.Default.QrCode),
-                    Triple(R.CHAT, "Chat", Icons.Default.Chat),
-                    Triple(R.PROFILE, "Profil", Icons.Default.Person)
-                )
-            )
+            BottomNav(R.STUDENT, nav, listOf(
+                Triple(R.STUDENT, "Beranda", Icons.Default.Home),
+                Triple(R.QR, "Absensi", Icons.Default.QrCode),
+                Triple(R.CHAT, "Chat", Icons.Default.Chat),
+                Triple(R.PROFILE, "Profil", Icons.Default.Person)
+            ))
         }
     ) { padding ->
         LazyColumn(
             Modifier.padding(padding).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(13.dp),
-            contentPadding = PaddingValues(bottom = 20.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            item { HeaderCard(student?.nama ?: vm.user.value?.nama.orEmpty(), "MURID • ${student?.kelas ?: "-"}", "Semangat belajar dan jaga kehadiran hari ini") }
+            item { HeaderCard(student?.nama ?: user?.nama.orEmpty(), "MURID • ${student?.kelas ?: "-"}", "Semangat belajar dan jaga kehadiran hari ini") }
             item {
                 Card(shape = RoundedCornerShape(23.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                     Row(Modifier.fillMaxWidth().padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(if (todayStatus == "HADIR") Icons.Default.CheckCircle else Icons.Default.EventNote, null, Modifier.size(42.dp), tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.size(14.dp))
-                        Column {
+                        Spacer(Modifier.size(13.dp))
+                        Column(Modifier.weight(1f)) {
                             Text("Status Hari Ini", style = MaterialTheme.typography.bodySmall)
-                            Text(todayStatus, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Text(todayStatus, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                            Text(if (todayStatus == "HADIR") "Terima kasih sudah disiplin!" else "Jangan lupa melakukan absensi.", style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
             }
+            item { SectionTitle("Ringkasan Kehadiran") }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     StatCard("Hadir", attendance.count { it.status == "HADIR" }.toString(), Icons.Default.CheckCircle, Modifier.weight(1f))
@@ -397,19 +446,19 @@ fun ModernStudentHome(app: AbsensiApplication, vm: AppVM, nav: NavHostController
                     StatCard("Sakit", attendance.count { it.status == "SAKIT" }.toString(), Icons.Default.Sick, Modifier.weight(1f))
                 }
             }
-            item { Text("Menu Utama", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+            item { SectionTitle("Menu Utama") }
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        ActionCard("QR Saya", "Tunjukkan ke guru", Icons.Default.QrCode) { nav.navigate(R.QR) }
-                        ActionCard("Pengajuan Izin", "Sakit, izin, keterangan", Icons.Default.EventNote) { nav.navigate(R.LEAVE) }
-                        ActionCard("Chatroom", "Grup kelas", Icons.Default.Chat) { nav.navigate(R.CHAT) }
-                    }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                        ActionCard("Riwayat", "Lihat absensi", Icons.Default.Assignment) { nav.navigate(R.HISTORY) }
-                        ActionCard("Statistik", "Ringkasan kehadiran", Icons.Default.BarChart) { nav.navigate(R.STATS) }
-                        ActionCard("Profil", "Data akun", Icons.Default.Person) { nav.navigate(R.PROFILE) }
-                    }
+                    MenuTile("QR Saya", Icons.Default.QrCode, { nav.navigate(R.QR) }, Modifier.weight(1f))
+                    MenuTile("Riwayat", Icons.Default.Assignment, { nav.navigate(R.HISTORY) }, Modifier.weight(1f))
+                    MenuTile("Izin & Sakit", Icons.Default.EventNote, { nav.navigate(R.LEAVE) }, Modifier.weight(1f))
+                }
+            }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    MenuTile("Statistik", Icons.Default.BarChart, { nav.navigate(R.STATS) }, Modifier.weight(1f))
+                    MenuTile("Chatroom", Icons.Default.Chat, { nav.navigate(R.CHAT) }, Modifier.weight(1f))
+                    MenuTile("Profil", Icons.Default.Person, { nav.navigate(R.PROFILE) }, Modifier.weight(1f))
                 }
             }
         }
@@ -418,14 +467,13 @@ fun ModernStudentHome(app: AbsensiApplication, vm: AppVM, nav: NavHostController
 
 @Composable
 fun LeaveRequests(app: AbsensiApplication, vm: AppVM, nav: NavHostController) {
-    val isStudent = vm.user.value?.role == "MURID"
-    val student by produceState<Student?>(null, vm.user.value?.id) {
-        value = vm.user.value?.id?.let { app.db.students().byUser(it) }
-    }
-    val requests = if (isStudent) {
-        app.db.leaveRequests().byStudent(student?.id ?: -1L).collectAsState(emptyList()).value
+    val user by vm.user.collectAsState()
+    val isStudent = user?.role == "MURID"
+    val student by produceState<Student?>(null, user?.id) { value = user?.id?.let { app.db.students().byUser(it) } }
+    val requests by if (isStudent) {
+        app.db.leaveRequests().byStudent(student?.id ?: -1L).collectAsState(emptyList())
     } else {
-        app.db.leaveRequests().observeAll().collectAsState(emptyList()).value
+        app.db.leaveRequests().observeAll().collectAsState(emptyList())
     }
     var type by remember { mutableStateOf("SAKIT") }
     var start by remember { mutableStateOf(Clock.date()) }
@@ -437,17 +485,17 @@ fun LeaveRequests(app: AbsensiApplication, vm: AppVM, nav: NavHostController) {
     ScaffoldBack(if (isStudent) "Pengajuan Izin & Sakit" else "Review Pengajuan", { nav.popBackStack() }) { padding ->
         LazyColumn(Modifier.padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
             if (isStudent) {
-                item { Text("Ajukan keterangan ketidakhadiran", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
-                item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf("SAKIT", "IZIN", "KEPERLUAN").forEach { value -> FilterChip(type == value, { type = value }, label = { Text(value) }) } } }
+                item { SectionTitle("Buat Pengajuan") }
+                item { Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) { listOf("SAKIT", "IZIN", "KEPERLUAN").forEach { value -> FilterChip(type == value, { type = value }, label = { Text(value) }) } } }
                 item { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { Field(start, { start = it }, "Mulai", modifier = Modifier.weight(1f)); Field(end, { end = it }, "Sampai", modifier = Modifier.weight(1f)) } }
-                item { Field(reason, { reason = it }, "Keterangan / alasan", minLines = 3) }
-                item { Field(attachment, { attachment = it }, "Lampiran (nama file, opsional)") }
-                item { Button(onClick = { if (student != null && reason.isNotBlank()) scope.launch { app.db.leaveRequests().insert(LeaveRequest(studentId = student!!.id, type = type, startDate = start, endDate = end, reason = reason, attachmentName = attachment.ifBlank { null })); reason = ""; attachment = "" } }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), enabled = student != null && reason.isNotBlank()) { Text("Kirim Pengajuan") } }
-                item { Text("Riwayat Pengajuan", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+                item { Field(reason, { reason = it }, "Alasan", minLines = 3) }
+                item { Field(attachment, { attachment = it }, "Lampiran (opsional)") }
+                item { Button(onClick = { if (student != null && reason.isNotBlank()) scope.launch { app.db.leaveRequests().insert(LeaveRequest(studentId = student!!.id, type = type, startDate = start, endDate = end, reason = reason, attachmentName = attachment.ifBlank { null })); reason = ""; attachment = "" } }, modifier = Modifier.fillMaxWidth(), enabled = student != null && reason.isNotBlank(), shape = RoundedCornerShape(20.dp)) { Text("Kirim Pengajuan") } }
+                item { SectionTitle("Riwayat Pengajuan") }
                 items(requests) { RequestCard(it) }
             } else {
-                item { Text("Pengajuan terbaru", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
-                items(requests) { request -> ReviewCard(app, request) }
+                item { SectionTitle("Pengajuan Terbaru") }
+                items(requests) { ReviewCard(app, it) }
             }
         }
     }
@@ -459,7 +507,7 @@ private fun RequestCard(request: LeaveRequest) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(request.type, fontWeight = FontWeight.Bold)
-                Text(request.status, color = when (request.status) { "DISETUJUI" -> Color(0xFF159957); "DITOLAK" -> MaterialTheme.colorScheme.error; else -> MaterialTheme.colorScheme.primary })
+                Text(request.status, color = if (request.status == "DITOLAK") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
             Text("${request.startDate} → ${request.endDate}")
             Text(request.reason, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -470,9 +518,7 @@ private fun RequestCard(request: LeaveRequest) {
 
 @Composable
 private fun ReviewCard(app: AbsensiApplication, request: LeaveRequest) {
-    val student = produceState<Student?>(null, request.studentId) {
-        value = app.db.students().byId(request.studentId)
-    }.value
+    val student = produceState<Student?>(null, request.studentId) { value = app.db.students().byId(request.studentId) }.value
     var note by remember(request.id) { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     Card(shape = RoundedCornerShape(20.dp)) {
@@ -486,42 +532,33 @@ private fun ReviewCard(app: AbsensiApplication, request: LeaveRequest) {
                     Button(onClick = { scope.launch { app.db.leaveRequests().review(request.id, "DISETUJUI", note) } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp)) { Text("Setujui") }
                     OutlinedButton(onClick = { scope.launch { app.db.leaveRequests().review(request.id, "DITOLAK", note) } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp)) { Text("Tolak") }
                 }
-            } else {
-                Text("Status: ${request.status}", fontWeight = FontWeight.SemiBold)
-            }
+            } else Text("Status: ${request.status}", fontWeight = FontWeight.SemiBold)
         }
     }
 }
 
 @Composable
 fun Chatroom(app: AbsensiApplication, vm: AppVM, nav: NavHostController) {
-    val user = vm.user.value ?: return
-    val room = when (user.role) {
-        "MURID" -> "KELAS-${user.kelas ?: "VII-A"}"
-        "GURU" -> "KELAS-VII-A"
-        else -> "RUANG-SEKOLAH"
-    }
+    val user by vm.user.collectAsState()
+    val current = user ?: return
+    val room = when (current.role) { "MURID" -> "KELAS-${current.kelas ?: "VII-A"}"; "GURU" -> "KELAS-VII-A"; else -> "RUANG-SEKOLAH" }
     val messages by app.db.chat().observeRoom(room).collectAsState(emptyList())
     var text by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Column { Text("Chatroom", fontWeight = FontWeight.Bold); Text(room, style = MaterialTheme.typography.labelSmall) } },
-                navigationIcon = { IconButton({ nav.popBackStack() }) { Icon(Icons.Default.Chat, "Kembali") } }
-            )
-        },
+        containerColor = Page,
+        topBar = { TopAppBar(title = { Column { Text("Chatroom", fontWeight = FontWeight.Bold); Text(room, style = MaterialTheme.typography.labelSmall) } }, navigationIcon = { IconButton({ nav.popBackStack() }) { Icon(Icons.Default.Chat, "Kembali") } }) },
         bottomBar = {
             Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Field(text, { text = it }, "Tulis pesan…", modifier = Modifier.weight(1f))
                 Spacer(Modifier.size(8.dp))
-                Button(onClick = { if (text.isNotBlank()) scope.launch { app.db.chat().insert(ChatMessage(roomName = room, senderId = user.id, senderName = user.nama, senderRole = user.role, message = text.trim())); text = "" } }, enabled = text.isNotBlank(), shape = RoundedCornerShape(18.dp)) { Text("Kirim") }
+                Button(onClick = { if (text.isNotBlank()) scope.launch { app.db.chat().insert(ChatMessage(roomName = room, senderId = current.id, senderName = current.nama, senderRole = current.role, message = text.trim())); text = "" } }, enabled = text.isNotBlank(), shape = RoundedCornerShape(18.dp)) { Text("Kirim") }
             }
         }
     ) { padding ->
         LazyColumn(Modifier.padding(padding).padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 12.dp)) {
-            items(messages) { msg -> MessageBubble(msg, msg.senderId == user.id) }
+            items(messages) { msg -> MessageBubble(msg, msg.senderId == current.id) }
         }
     }
 }
@@ -529,7 +566,7 @@ fun Chatroom(app: AbsensiApplication, vm: AppVM, nav: NavHostController) {
 @Composable
 private fun MessageBubble(message: ChatMessage, mine: Boolean) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start) {
-        Column(Modifier.fillMaxWidth(.82f).clip(RoundedCornerShape(18.dp)).background(if (mine) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant).padding(12.dp)) {
+        Column(Modifier.fillMaxWidth(.82f).clip(RoundedCornerShape(18.dp)).background(if (mine) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface).padding(12.dp)) {
             if (!mine) Text(message.senderName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
             Text(message.message)
             Text(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(message.sentAt)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.End))
@@ -543,29 +580,39 @@ fun ModernReports(app: AbsensiApplication, vm: AppVM, nav: NavHostController) {
     val attendance by app.db.attendance().observeAll().collectAsState(emptyList())
     val students by app.db.students().observeAll().collectAsState(emptyList())
     var message by remember { mutableStateOf("") }
+    val date = Clock.date()
 
     ScaffoldBack("Laporan & Export", { nav.popBackStack() }) { padding ->
-        LazyColumn(Modifier.padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(Modifier.padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+            item { SectionTitle("Laporan Absensi") }
             item {
-                Text("Laporan Absensi", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("${attendance.size} catatan kehadiran tersedia")
-            }
-            item {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(onClick = { message = runCatching { ReportExporter.exportExcel(context, attendance, students) }.getOrElse { "Gagal: ${it.message}" } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp)) { Text("Export Excel") }
-                    Button(onClick = { message = runCatching { ReportExporter.exportPdf(context, attendance, students) }.getOrElse { "Gagal: ${it.message}" } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp)) { Text("Export PDF") }
-                }
-            }
-            if (message.isNotBlank()) item { Card(shape = RoundedCornerShape(18.dp)) { Text(message + "\nFile tersimpan di folder Download/Absensi-MTs-Al-Basroh", Modifier.padding(16.dp)) } }
-            item { Text("Ringkasan Hari Ini", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
-            item {
-                val date = Clock.date()
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     StatCard("Hadir", attendance.count { it.tanggal == date && it.status == "HADIR" }.toString(), Icons.Default.CheckCircle, Modifier.weight(1f))
                     StatCard("Izin", attendance.count { it.tanggal == date && it.status == "IZIN" }.toString(), Icons.Default.EventNote, Modifier.weight(1f))
                     StatCard("Sakit", attendance.count { it.tanggal == date && it.status == "SAKIT" }.toString(), Icons.Default.Sick, Modifier.weight(1f))
                 }
             }
+            item {
+                Card(shape = RoundedCornerShape(22.dp)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Filter Periode", fontWeight = FontWeight.Bold)
+                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                            FilterChip(true, {}, label = { Text("Harian") })
+                            FilterChip(false, {}, label = { Text("Mingguan") })
+                            FilterChip(false, {}, label = { Text("Bulanan") })
+                            FilterChip(false, {}, label = { Text("Semester") })
+                        }
+                    }
+                }
+            }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { message = runCatching { ReportExporter.exportExcel(context, attendance, students) }.getOrElse { "Gagal: ${it.message}" } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp)) { Text("Export Excel") }
+                    Button(onClick = { message = runCatching { ReportExporter.exportPdf(context, attendance, students) }.getOrElse { "Gagal: ${it.message}" } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(18.dp)) { Text("Export PDF") }
+                }
+            }
+            if (message.isNotBlank()) item { Card(shape = RoundedCornerShape(18.dp)) { Text(message, Modifier.padding(16.dp)) } }
+            item { Text("${attendance.size} catatan kehadiran • ${students.size} murid", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
 }
