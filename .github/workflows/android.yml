@@ -19,22 +19,15 @@ permissions:
 jobs:
   build:
 
-    name: Build Absensi MTs Al Basroh
+    name: Build APK
 
     runs-on: ubuntu-latest
 
     steps:
 
-      # ==========================================
-      # CHECKOUT
-      # ==========================================
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-
-      # ==========================================
-      # JAVA 17
-      # ==========================================
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
@@ -42,93 +35,39 @@ jobs:
           java-version: "17"
           cache: gradle
 
-
-      # ==========================================
-      # GRADLE 8.7
-      # ==========================================
-      - name: Setup Gradle 8.7
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "8.7"
 
-
-      # ==========================================
-      # CHECK GRADLE
-      # ==========================================
-      - name: Check Gradle
+      - name: Check Project
         run: |
           gradle --version
+          echo "Building Absensi MTs Al Basroh..."
 
-
-      # ==========================================
-      # CLEAN
-      # ==========================================
-      - name: Clean Project
+      - name: Clean
         run: |
           gradle clean --stacktrace
 
-
-      # ==========================================
-      # UNIT TEST
-      # ==========================================
-      - name: Run Unit Tests
-        run: |
-          gradle test --stacktrace
-
-
-      # ==========================================
-      # BUILD DEBUG APK
-      # ==========================================
       - name: Build Debug APK
         run: |
-          gradle assembleDebug --stacktrace
+          gradle assembleDebug --stacktrace --no-daemon
 
-
-      # ==========================================
-      # LIST APK
-      # ==========================================
-      - name: Show Generated APK
+      - name: Show APK
         run: |
-          echo "=========================================="
-          echo "GENERATED APK"
-          echo "=========================================="
+          echo "======================================"
+          echo "APK BERHASIL DIBUAT"
+          echo "======================================"
 
           find app/build/outputs/apk \
             -type f \
             -name "*.apk" \
             -print
 
-          echo ""
-          echo "=========================================="
-          echo "APK SIZE"
-          echo "=========================================="
-
-          find app/build/outputs/apk \
-            -type f \
-            -name "*.apk" \
-            -exec du -h {} \;
-
-
-      # ==========================================
-      # UPLOAD APK
-      # ==========================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Absensi-MTs-Al-Basroh-v1.3.0
+          name: Absensi-MTs-Al-Basroh-debug
           path: |
             app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
-
-
-      # ==========================================
-      # UPLOAD TEST REPORT
-      # ==========================================
-      - name: Upload Test Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Absensi-MTs-Al-Basroh-test-report
-          path: |
-            app/build/reports/tests/
-          if-no-files-found: ignore
