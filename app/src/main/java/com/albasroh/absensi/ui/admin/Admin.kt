@@ -498,39 +498,84 @@ fun Settings(
     nav: NavHostController
 ) {
     ScaffoldBack("Pengaturan", { nav.popBackStack() }) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)
         ) {
-            Text("Tema", style = MaterialTheme.typography.titleLarge)
+            item {
+                Text(
+                    "Tampilan",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+            }
 
-            listOf(
-                "SYSTEM" to "Sistem",
-                "LIGHT" to "Terang",
-                "DARK" to "Gelap"
-            ).forEach { (value, label) ->
-                Button(
-                    onClick = { vm.setTheme(value) },
-                    modifier = Modifier.fillMaxWidth()
+            item {
+                Text(
+                    "Pilih tema aplikasi",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(label)
+                    listOf(
+                        "SYSTEM" to "Sistem",
+                        "LIGHT" to "Terang",
+                        "DARK" to "Gelap"
+                    ).forEach { (value, label) ->
+                        Button(
+                            onClick = { vm.setTheme(value) },
+                            modifier = Modifier.weight(1f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)
+                        ) {
+                            Text(label)
+                        }
+                    }
                 }
             }
 
-            Spacer(Modifier.height(10.dp))
-
-            Button(
-                onClick = {
-                    vm.logout()
-                    nav.navigate(R.LOGIN) {
-                        popUpTo(0)
+            item {
+                Spacer(Modifier.height(8.dp))
+                Card(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            "Akun",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
+                        Spacer(Modifier.height(5.dp))
+                        Text("${vm.user.value?.nama ?: "-"}")
+                        Text(
+                            "${vm.user.value?.role ?: "-"}",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Logout")
+                }
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        vm.logout()
+                        nav.navigate(R.LOGIN) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+                ) {
+                    Text("Logout")
+                }
             }
         }
     }
