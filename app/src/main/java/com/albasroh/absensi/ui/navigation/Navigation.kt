@@ -1,16 +1,33 @@
 package com.albasroh.absensi.ui.navigation
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.albasroh.absensi.AbsensiApplication
+import com.albasroh.absensi.R as AppR
 import com.albasroh.absensi.ui.admin.AdminAttendance
 import com.albasroh.absensi.ui.admin.Classes
 import com.albasroh.absensi.ui.admin.Reports
@@ -18,18 +35,20 @@ import com.albasroh.absensi.ui.admin.Settings
 import com.albasroh.absensi.ui.admin.Students
 import com.albasroh.absensi.ui.admin.Teachers
 import com.albasroh.absensi.ui.auth.Login
+import com.albasroh.absensi.ui.modern.Chatroom
+import com.albasroh.absensi.ui.modern.LeaveRequests
+import com.albasroh.absensi.ui.modern.ModernAdminHome
+import com.albasroh.absensi.ui.modern.ModernReports
+import com.albasroh.absensi.ui.modern.ModernStudentHome
+import com.albasroh.absensi.ui.modern.ModernTeacherHome
+import com.albasroh.absensi.ui.student.StudentQR
+import com.albasroh.absensi.ui.student.StudentStats
 import com.albasroh.absensi.ui.teacher.History
 import com.albasroh.absensi.ui.teacher.Profile
 import com.albasroh.absensi.ui.teacher.Scanner
 import com.albasroh.absensi.ui.teacher.Session
 import com.albasroh.absensi.ui.teacher.TeacherStudents
 import com.albasroh.absensi.ui.teacher.Today
-import com.albasroh.absensi.ui.modern.ModernAdminHome
-import com.albasroh.absensi.ui.modern.ModernTeacherHome
-import com.albasroh.absensi.ui.modern.ModernStudentHome
-import com.albasroh.absensi.ui.modern.LeaveRequests
-import com.albasroh.absensi.ui.modern.Chatroom
-import com.albasroh.absensi.ui.modern.ModernReports
 
 object R {
     const val SPLASH = "splash"
@@ -61,15 +80,18 @@ fun Nav(
     vm: AppVM,
     nav: NavHostController
 ) {
+    val sessionReady by vm.sessionReady.collectAsState()
+    val user by vm.user.collectAsState()
+
     NavHost(
         navController = nav,
         startDestination = R.SPLASH
     ) {
         composable(R.SPLASH) {
-            LaunchedEffect(vm.sessionReady.value) {
-                if (!vm.sessionReady.value) return@LaunchedEffect
+            androidx.compose.runtime.LaunchedEffect(sessionReady, user?.role) {
+                if (!sessionReady) return@LaunchedEffect
 
-                val destination = when (vm.user.value?.role) {
+                val destination = when (user?.role) {
                     "ADMIN" -> R.ADMIN
                     "GURU" -> R.TEACHER
                     "MURID" -> R.STUDENT
@@ -82,12 +104,7 @@ fun Nav(
                 }
             }
 
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            SplashContent()
         }
 
         composable(R.LOGIN) { Login(vm, nav) }
@@ -105,10 +122,60 @@ fun Nav(
         composable(R.STUDENTS_T) { TeacherStudents(app, vm, nav) }
         composable(R.HISTORY) { History(app, vm, nav) }
         composable(R.STUDENT) { ModernStudentHome(app, vm, nav) }
-        composable(R.QR) { com.albasroh.absensi.ui.student.StudentQR(app, vm, nav) }
-        composable(R.STATS) { com.albasroh.absensi.ui.student.StudentStats(app, vm, nav) }
+        composable(R.QR) { StudentQR(app, vm, nav) }
+        composable(R.STATS) { StudentStats(app, vm, nav) }
         composable(R.PROFILE) { Profile(vm, nav) }
         composable(R.LEAVE) { LeaveRequests(app, vm, nav) }
         composable(R.CHAT) { Chatroom(app, vm, nav) }
+    }
+}
+
+@Composable
+private fun SplashContent() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF0D47B8), Color(0xFF1769E0), Color(0xFFF5F9FF))
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(132.dp)
+                    .clip(RoundedCornerShape(36.dp))
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(AppR.drawable.logo_mts_al_basroh),
+                    contentDescription = "Logo MTs-Al Basroh",
+                    modifier = Modifier.size(112.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+            Spacer(Modifier.size(18.dp))
+            Text(
+                "MTs-Al Basroh",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color.White
+            )
+            Text(
+                "Absensi Digital",
+                color = Color.White.copy(alpha = .86f)
+            )
+            Spacer(Modifier.size(26.dp))
+            CircularProgressIndicator(
+                modifier = Modifier.size(28.dp),
+                color = Color.White,
+                strokeWidth = 3.dp
+            )
+        }
     }
 }
