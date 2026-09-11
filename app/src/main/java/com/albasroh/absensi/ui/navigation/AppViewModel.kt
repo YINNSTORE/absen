@@ -16,22 +16,25 @@ class AppVM(
 ) : ViewModel() {
     val session: StateFlow<Pair<Long?, String?>> = app.prefs.session.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
+        started = SharingStarted.Eagerly,
         initialValue = null to null
     )
 
     val theme: StateFlow<String> = app.prefs.themeFlow.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
+        started = SharingStarted.Eagerly,
         initialValue = "SYSTEM"
     )
 
+    // Mencegah splash mengira user logout sebelum DataStore selesai dibaca.
+    val sessionReady = MutableStateFlow(false)
     val user = MutableStateFlow<User?>(null)
 
     init {
         viewModelScope.launch {
-            session.collect { (id, _) ->
+            app.prefs.session.collect { (id, _) ->
                 user.value = id?.let { app.db.users().byId(it) }
+                sessionReady.value = true
             }
         }
     }
@@ -45,6 +48,7 @@ class AppVM(
             val result = app.auth.login(username, password)
             result.onSuccess { loggedInUser ->
                 app.prefs.login(loggedInUser.id, loggedInUser.role)
+                user.value = loggedInUser
             }
             done(result)
         }
