@@ -10,7 +10,7 @@
         android:icon="@drawable/logo_mts_al_basroh"
         android:roundIcon="@drawable/logo_mts_al_basroh"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Absensi">
+        android:theme="@style/Theme.Absensi.Starting">
 
         <activity
             android:name=".MainActivity"
